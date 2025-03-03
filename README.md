@@ -1,8 +1,8 @@
-# Blackjack Game - Console Version
+# Blackjack Game
 
 ## Project Overview
 
-This project is a **console-based Blackjack game** developed in **C#** using .NET, with plans for future expansion to a graphical user interface (GUI). The game supports:
+This project is a **Blackjack game** developed in **C#** using .NET, with plans for future expansion to a graphical user interface (GUI). The game supports:
 
 - ✅ Single player vs. dealer.
 - ✅ Full betting system with starting money.
