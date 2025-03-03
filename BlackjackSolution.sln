@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blackjack.ConsoleApp", "Bla
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blackjack.Core", "Blackjack.Core\Blackjack.Core.csproj", "{D9843ECF-3D2E-4E6B-92FA-57FFC6A60C8B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blackjack.MAUI", "Blackjack.MAUI\Blackjack.MAUI.csproj", "{91E0695B-4923-4D5B-A1FD-92DC2985219C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{D9843ECF-3D2E-4E6B-92FA-57FFC6A60C8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9843ECF-3D2E-4E6B-92FA-57FFC6A60C8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9843ECF-3D2E-4E6B-92FA-57FFC6A60C8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91E0695B-4923-4D5B-A1FD-92DC2985219C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91E0695B-4923-4D5B-A1FD-92DC2985219C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91E0695B-4923-4D5B-A1FD-92DC2985219C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91E0695B-4923-4D5B-A1FD-92DC2985219C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
