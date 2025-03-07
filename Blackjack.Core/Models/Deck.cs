@@ -23,6 +23,9 @@ namespace Blackjack.Core.Models
             }
         }
 
+        // It loops backwards through the list, and for each card,
+        // it swaps it with a random earlier card (including itself),
+        // ensuring every possible order is equally likely.
         public void Shuffle()
         {
             for (int i = _cards.Count - 1; i > 0; i--)

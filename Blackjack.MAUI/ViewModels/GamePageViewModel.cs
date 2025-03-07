@@ -489,17 +489,21 @@ namespace Blackjack.MAUI.ViewModels
         {
             IsDealerTurn = true;
 
-            // 1) Replace the second card (index=1) with the real card image
+            // Clear all dealer images (we're about to refresh them)
+            DealerCardImages.Clear();
+
+            // Rebuild the full list of images for all cards the dealer holds
             var dealerHand = _game.GetDealer().Hands[0];
-            var dealerSecond = dealerHand.Cards[1];
-            DealerCardImages[1] = GetCardImagePath(dealerSecond);
+            foreach (var card in dealerHand.Cards)
+            {
+                DealerCardImages.Add(GetCardImagePath(card));
+            }
 
-            // 2) Show full textual dealer hand if you still want that
-            DealerHiddenCard = _game.DescribeDealerHand();
-            DealerHandDisplay = DealerHiddenCard;
+            // Update the text display if you still want that
+            DealerHandDisplay = _game.DescribeDealerHand();
 
-            // 3) Determine outcome
-            bool playerHadBlackjack = false;
+            // Determine outcome and update the UI
+            bool playerHadBlackjack = false; // (This could be tracked per hand if you support multiple hands)
             string outcome = _game.DetermineOutcome(playerHadBlackjack);
 
             PlayerMoney = _game.PlayerMoney;
@@ -507,6 +511,7 @@ namespace Blackjack.MAUI.ViewModels
 
             EndRoundActions();
         }
+
 
         private void EndRoundActions()
         {
