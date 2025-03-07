@@ -1,69 +1,95 @@
-# Blackjack Game
 
-## Project Overview
+# 📝 Teacher Code Review Focus Points
 
-This project is a **Blackjack game** developed in **C#** using .NET, with plans for future expansion to a graphical user interface (GUI). The game supports:
+### 1️⃣ Code Architecture
+- 🔹 **Is the modular design easy enough to understand for someone who didn’t write the code?**
+- 🔹 **Is the code sufficiently divided into multiple files and projects where necessary? Should any areas be further split to improve clarity?**
 
-- ✅ Single player vs. dealer.
-- ✅ Full betting system with starting money.
-- ✅ Insurance mechanic when the dealer shows an Ace.
-- ✅ Splitting pairs into two hands.
-- ✅ Doubling down with correct bet adjustment.
-- ✅ Multiple hands after splitting, each independently played.
-- ✅ Automatic Blackjack detection and payouts (2.5x for natural Blackjack).
+### 2️⃣ ChatGPT Usage in the Codebase
+- 🔹 **Many parts of the code were written with the help of ChatGPT (this is also noted in comments).**  
+- 🔹 **I plan to keep using AI tools in the future — are there any patterns, pitfalls, or concerns you notice that I should be aware of when using ChatGPT in actual production work?**
 
-The project was developed as part of an **educational exercise** to build a structured and extensible application using good object-oriented practices.
+### 3️⃣ General Feedback
+- 🔹 **If you spot any areas where the code could be improved (performance, readability, better design), I’d love to hear your feedback.**
 
 ---
 
-## Features
+# ♠️ Blackjack Game
 
-- 🃏 Full deck handling (shuffling and dealing).
-- 💰 Betting system with split-hand bet tracking.
-- 🔥 Multi-round support — game continues until the player runs out of money or quits.
-- 🃏 Blackjack (21) auto-detect and automatic win.
-- ✂️ Pair splitting with independent hand management.
-- 🛡️ Insurance bets when the dealer shows an Ace.
-- ✖️ Dealer logic follows standard rules — hits until 17+.
+## 🏗️ Project Overview
+Welcome to my **Blackjack game project**, written in **C# with .NET**! The game logic is fully separated into a **core library (`Blackjack.Core`)**, allowing reuse across different frontends like:
+
+- ✅ **Console Application** (`Blackjack.ConsoleApp`)
+- ✅ **Cross-platform MAUI GUI** (`Blackjack.MAUI`)
+
+This modular design makes the game logic testable, extensible, and adaptable for future expansions, such as AI players or a web interface.
 
 ---
 
-## Installation & Running
+## ✨ Features
+
+- 🃏 **Single Player vs. Dealer Gameplay**
+- 💰 **Betting System** — Start with a set amount of money
+- 🛡️ **Insurance Bets** — Available if the dealer’s up-card is an Ace
+- ✂️ **Splitting Pairs** — If your first two cards match, split into two hands
+- 🔥 **Double Down** — Double your bet and draw exactly **one** more card
+- 🃏 **Blackjack Detection** — Natural Blackjack (Ace + 10) pays **2.5x**
+- 🔄 **Multi-Round Play** — Continue until you run out of money or quit
+- 🏦 **Dealer Logic** — Dealer hits until at least 17
+
+---
+
+## 🛠️ Installation & Running
 
 ### Prerequisites
+- 📥 **Visual Studio 2022** (or newer)
+- 🔗 **.NET 6 or 7 SDK** (depending on your environment)
 
-- Visual Studio 2022 (or newer)
-- .NET 6 or 7 SDK (depending on your target version)
+### 1️⃣ Clone the Repository
+```bash
+git clone <your-repo-url>
+```
 
-### Running the Game
+### 2️⃣ Run the Console Version
+1. Open the solution in **Visual Studio**.
+2. Set **`Blackjack.ConsoleApp`** as the startup project.
+3. Press **F5** (or **Ctrl+F5**) to run.
 
-1. Clone the repository:
-    ```bash
-    git clone <your-repo-url>
-    ```
-2. Open the project in **Visual Studio 2022**.
-3. Set the **Blackjack.ConsoleApp** project as the startup project.
-4. Run the project (F5 or `Ctrl+F5`).
-
----
-
-## Controls & Gameplay
-
-- Place a bet each round.
-- Choose to **Hit**, **Stand**, **Double Down**, or **Split** (when allowed).
-- Blackjack pays 2.5x.
-- Split hands are played independently.
-- Insurance is offered if the dealer shows an Ace.
+### 3️⃣ Run the MAUI Version
+1. Set **`Blackjack.MAUI`** as the startup project.
+2. Select your platform target (Windows, Android, etc.).
+3. Press **F5** to launch the graphical UI.
 
 ---
 
-## Future Plans
+## 🎮 How to Play
 
-- 💻 Graphical user interface (planned in future phase).
-- 🤖 Optional AI players.
-- 📊 Game statistics across sessions.
+1. 🪙 **Place Your Bet** — Enter a bet amount and start the round.
+2. 🃏 **Initial Deal** — You and the dealer receive 2 cards each.
+3. 🎯 **Choose Your Actions**:
+    - Hit – Draw another card.
+    - Stand – End your turn with your current total.
+    - Double Down – Double your bet and draw exactly **one** more card.
+    - Split – If your initial two cards are a pair, split them into two hands.
+4. 🔍 **Optional Insurance** — If the dealer shows an Ace, you may place an insurance bet.
+5. 🏁 **Dealer’s Turn** — Dealer reveals their hand and plays until they reach at least 17.
+6. 🏆 **Outcome & Payout** — Compare hands, resolve bets, and move to the next round.
 
 ---
 
-## Folder Structure
+## 🧰 Code Structure
 
+### 📂 `Blackjack.Core`
+- 🎯 **Models** — `Player`, `Hand`, `Deck`, `Card`, and supporting enums.
+- 🧠 **Game Logic** — `BlackjackGameAPI`, a clean API exposing methods like:
+    - `StartRound`, `PlayerHit`, `DealerTurn`, `DetermineOutcome`
+    - This layer is completely **UI-independent** for maximum flexibility.
+
+### 📂 `Blackjack.ConsoleApp`
+- 🖥️ Console interface using `BlackjackGameAPI`.
+- Supports multi-round play until player runs out of money or quits.
+
+### 📂 `Blackjack.MAUI`
+- 🌐 Cross-platform graphical interface using **.NET MAUI**.
+- 🧑‍🎨 XAML pages for layout, bound to a **`GamePageViewModel`**, which interacts with the core game logic.
+- 🃏 Card images, dynamic buttons, split-hand display, and more!
