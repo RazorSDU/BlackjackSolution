@@ -98,24 +98,43 @@ namespace Blackjack.Core.Models
         /// </summary>
         public bool CanSplit(int handIndex = 0)
         {
-            if (_hands.Count > 1) return false; // Only allow one split total
+            // Only allow one split total
+            if (_hands.Count > 1) return false;
+
+            // Must have exactly 2 cards in the target hand
             if (_hands[handIndex].Cards.Count != 2) return false;
 
             var c1 = _hands[handIndex].Cards[0];
             var c2 = _hands[handIndex].Cards[1];
-            bool sameRank = (c1.Rank == c2.Rank);
 
-            // Some Blackjack variants let you split on same "value" (e.g. 10 + King),
-            // but we follow "exact same rank" here. Adjust if desired.
-
-            if (!sameRank) return false;
+            // Instead of checking 'exact same rank', check if both are 10-valued
+            if (!AreBothTenValued(c1, c2))
+                return false;
 
             // Need enough money to match the bet
             int currentBet = _bets[handIndex];
-            if (Money < currentBet) return false;
+            if (Money < currentBet)
+                return false;
 
             return true;
         }
+
+        private bool AreBothTenValued(Card c1, Card c2)
+        {
+            // Example logic: 
+            // T, J, Q, K are each worth 10. 
+            // If your `Card` class has a `Value` property that returns 10 for T/J/Q/K, 
+            // you could do (c1.Value == 10 && c2.Value == 10).
+            // Otherwise, just check ranks:
+            bool isTenValued(Card c) =>
+                c.Rank == Rank.Ten ||
+                c.Rank == Rank.Jack ||
+                c.Rank == Rank.Queen ||
+                c.Rank == Rank.King;
+
+            return isTenValued(c1) && isTenValued(c2);
+        }
+
 
         /// <summary>
         /// Splits the hand at handIndex into two separate hands, each with its own bet.

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage
+    x:Class="Blackjack.MAUI.Views.GamePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Blackjack.MAUI.ViewModels"
+    xmlns:local="clr-namespace:Blackjack.MAUI.Helpers"
+    NavigationPage.HasNavigationBar="False"
+    Title="Blackjack Game"
+    BackgroundColor="Transparent">
+
+    <ContentPage.BindingContext>
+        <vm:GamePageViewModel />
+    </ContentPage.BindingContext>
+
+    <AbsoluteLayout HorizontalOptions="FillAndExpand"
+                    VerticalOptions="FillAndExpand"
+                    BackgroundColor="Transparent">
+
+        <!-- Background Image -->
+        <Image Source="titlebackground.jpg"
+               Aspect="AspectFill"
+               AbsoluteLayout.LayoutBounds="0,0,1,1"
+               AbsoluteLayout.LayoutFlags="PositionProportional,SizeProportional" />
+
+        <!-- A button to toggle auto-play -->
+        <Button Text="Toggle Auto-Play"
+            Clicked="OnToggleAutoPlayClicked"
+            HorizontalOptions="End"
+            VerticalOptions="End"
+            Margin="10" />
+
+        <Label Text="{Binding AutoPlayLastAction}"
+            FontSize="14"
+            TextColor="Yellow"
+            HorizontalOptions="Start"
+            VerticalOptions="Start"
+            Margin="10,60,0,0"/>
+
+
+
+        <!-- ================== Interaction Buttons (bottom-left) ================== -->
+        <HorizontalStackLayout local:GridPosition.Column="1"
+                               local:GridPosition.Row="8"
+                               local:GridPosition.HorizontalAlignment="Left"
+                               local:GridPosition.VerticalAlignment="Bottom"
+                               Spacing="5">
+
+            <Button x:Name="HitButton"
+                    Text="Hit"
+                    Command="{Binding HitCommand}"
+                    IsEnabled="{Binding CanHit}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanHit}" Value="False">
+                        <Setter Property="BackgroundColor" Value="#AAAAAA" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanHit}" Value="True">
+                        <Setter Property="BackgroundColor" Value="#6930C3" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <Button x:Name="StandButton"
+                    Text="Stand"
+                    Command="{Binding StandCommand}"
+                    IsEnabled="{Binding CanStand}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanStand}" Value="False">
+                        <Setter Property="BackgroundColor" Value="#AAAAAA" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanStand}" Value="True">
+                        <Setter Property="BackgroundColor" Value="#6930C3" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <Button x:Name="DoubleButton"
+                    Text="Double"
+                    Command="{Binding DoubleCommand}"
+                    IsEnabled="{Binding CanDouble}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanDouble}" Value="False">
+                        <Setter Property="BackgroundColor" Value="#AAAAAA" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanDouble}" Value="True">
+                        <Setter Property="BackgroundColor" Value="#6930C3" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <Button x:Name="SplitButton"
+                    Text="Split"
+                    Command="{Binding SplitCommand}"
+                    IsEnabled="{Binding CanSplit}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanSplit}" Value="False">
+                        <Setter Property="BackgroundColor" Value="#AAAAAA" />
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding CanSplit}" Value="True">
+                        <Setter Property="BackgroundColor" Value="#6930C3" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </HorizontalStackLayout>
+
+        <!-- ================== Player & current hand text (bottom-left) ================== -->
+        <VerticalStackLayout local:GridPosition.Column="0"
+                             local:GridPosition.Row="7"
+                             local:GridPosition.HorizontalAlignment="Center"
+                             local:GridPosition.VerticalAlignment="Bottom"
+                             Padding="10"
+                             Spacing="2">
+            <Label Text="{Binding PlayerName}"
+                   FontSize="18"
+                   TextColor="White" />
+            <Label Text="{Binding CurrentHandLabel}"
+                   FontSize="14"
+                   TextColor="White" />
+        </VerticalStackLayout>
+
+        <!-- ================== Bet Amount UI (middle-left) - Only visible if betting ================== -->
+        <VerticalStackLayout local:GridPosition.Column="0"
+                             local:GridPosition.Row="4"
+                             local:GridPosition.HorizontalAlignment="Left"
+                             local:GridPosition.VerticalAlignment="Center"
+                             Padding="5"
+                             Spacing="5"
+                             IsVisible="{Binding IsBetting}">
+            <Label Text="Bet"
+                   FontSize="16"
+                   TextColor="White" />
+            <Entry x:Name="BetEntry"
+                   Text="{Binding BetAmount}"
+                   WidthRequest="80"
+                   Keyboard="Numeric"
+                   TextColor="Black"
+                   BackgroundColor="#FFFFFF" />
+            <Button x:Name="StartRoundButton"
+                    Text="Start Round"
+                    Command="{Binding StartRoundCommand}"
+                    BackgroundColor="#6930C3"
+                    TextColor="White"/>
+        </VerticalStackLayout>
+
+        <!-- ================== Dealer's Hand (top-center), single stack ================== -->
+        <VerticalStackLayout local:GridPosition.Column="8"
+                             local:GridPosition.Row="0"
+                             local:GridPosition.HorizontalAlignment="Center"
+                             local:GridPosition.VerticalAlignment="Top"
+                             Spacing="2">
+            <Label Text="Dealer's Hand"
+                   FontSize="18"
+                   TextColor="White" />
+            <!-- 
+              Bound to DealerHandDisplay. In your ViewModel:
+                - If not dealer's turn, show "Up Card: XX"
+                - If dealer's turn, show "Full hand: XX, total=XX"
+            -->
+            <Label Text="{Binding DealerHandDisplay}"
+                   FontSize="16"
+                   TextColor="White" />
+        </VerticalStackLayout>
+
+        <!-- ========= 1) Dealer's Cards (Row=1) with NO overlap => Spacing="10" ========= -->
+        <HorizontalStackLayout local:GridPosition.Column="8"
+                               local:GridPosition.Row="1"
+                               local:GridPosition.HorizontalAlignment="Center"
+                               local:GridPosition.VerticalAlignment="Top"
+                               Spacing="10"
+                               BindableLayout.ItemsSource="{Binding DealerCardImages}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <Image Source="{Binding}"
+                           WidthRequest="80"
+                           HeightRequest="110"/>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </HorizontalStackLayout>
+
+        <!-- ======== 3) Info Text near top-right => (col=16, row=1), top alignment ======== -->
+        <Label Text="{Binding StatusMessage}"
+               local:GridPosition.Column="16"
+               local:GridPosition.Row="1"
+               local:GridPosition.HorizontalAlignment="Right"
+               local:GridPosition.VerticalAlignment="Top"
+               Padding="5,5,10,5"
+               TextColor="Yellow"
+               FontSize="14"
+               HorizontalTextAlignment="End"
+               />
+
+
+        <!-- ========== 2) Player's Main Hand (Row=7) with overlap => Spacing="-60" ========= -->
+        <HorizontalStackLayout local:GridPosition.Column="8"
+                               local:GridPosition.Row="7"
+                               local:GridPosition.HorizontalAlignment="Center"
+                               local:GridPosition.VerticalAlignment="Bottom"
+                               Spacing="-60"
+                               BindableLayout.ItemsSource="{Binding PlayerCardImages}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <Image Source="{Binding}"
+                           WidthRequest="80"
+                           HeightRequest="110"/>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </HorizontalStackLayout>
+
+        <!-- ================== Player's Hand (bottom-center) ================== -->
+        <VerticalStackLayout local:GridPosition.Column="8"
+                             local:GridPosition.Row="8"
+                             local:GridPosition.HorizontalAlignment="Center"
+                             local:GridPosition.VerticalAlignment="Bottom"
+                             Spacing="5">
+            <Label Text="Player's Hand"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   HorizontalOptions="Center"/>
+            <Label Text="{Binding PlayerHandDisplay}"
+                   FontSize="14"
+                   TextColor="White"
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+
+        <!-- ========== 4) Double Card Layout = row=6 (one row above main player's hand) ========== -->
+        <!-- 
+             This is a special layout to show the single "double" card, rotated 90°.
+             You can bind an ObservableCollection<string> called DoubleCardImages. 
+             Typically, you'd only add 1 card after doubling. 
+         -->
+        <HorizontalStackLayout local:GridPosition.Column="8"
+                               local:GridPosition.Row="6"
+                               local:GridPosition.HorizontalAlignment="Center"
+                               local:GridPosition.VerticalAlignment="Bottom"
+                               Spacing="0"
+                               BindableLayout.ItemsSource="{Binding DoubleCardImages}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <Image Source="{Binding}"
+                           WidthRequest="80"
+                           HeightRequest="110"
+                           Rotation="90"
+                        />
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </HorizontalStackLayout>
+
+        <!-- ========== 5) Split Hands (Symmetrical) ========== -->
+        <!-- 
+             If the user splits, you can show up to two separate HorizontalStackLayouts. 
+             For example, we place them side by side. 
+             Let’s assume left hand at col=7, row=7, right hand at col=9, row=7. 
+         -->
+        <HorizontalStackLayout local:GridPosition.Column="7"
+                               local:GridPosition.Row="7"
+                               local:GridPosition.HorizontalAlignment="Right"
+                               local:GridPosition.VerticalAlignment="Bottom"
+                               Spacing="-60"
+                               IsVisible="{Binding IsSplitHand1Active}"
+                               BindableLayout.ItemsSource="{Binding SplitHand1Images}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <Image Source="{Binding}"
+                           WidthRequest="80"
+                           HeightRequest="110"/>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </HorizontalStackLayout>
+
+        <HorizontalStackLayout local:GridPosition.Column="9"
+                               local:GridPosition.Row="7"
+                               local:GridPosition.HorizontalAlignment="Left"
+                               local:GridPosition.VerticalAlignment="Bottom"
+                               Spacing="-60"
+                               IsVisible="{Binding IsSplitHand2Active}"
+                               BindableLayout.ItemsSource="{Binding SplitHand2Images}">
+            <BindableLayout.ItemTemplate>
+                <DataTemplate>
+                    <Image Source="{Binding}"
+                           WidthRequest="80"
+                           HeightRequest="110"/>
+                </DataTemplate>
+            </BindableLayout.ItemTemplate>
+        </HorizontalStackLayout>
+
+        <!-- ================== Player's Money (bottom-right) ================== -->
+        <Label Text="{Binding PlayerMoney}"
+               local:GridPosition.Column="16"
+               local:GridPosition.Row="8"
+               local:GridPosition.HorizontalAlignment="Right"
+               local:GridPosition.VerticalAlignment="Bottom"
+               Padding="0,0,10,10"
+               TextColor="Yellow"
+               FontSize="26" />
+    </AbsoluteLayout>
+</ContentPage>

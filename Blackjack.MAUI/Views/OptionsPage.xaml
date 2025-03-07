@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage 
+    x:Class="Blackjack.MAUI.Views.OptionsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Blackjack.MAUI.ViewModels"
+    Title="Options">
+
+    <!-- Bind this page to the OptionsPageViewModel -->
+    <ContentPage.BindingContext>
+        <vm:OptionsPageViewModel />
+    </ContentPage.BindingContext>
+
+    <StackLayout VerticalOptions="Center" HorizontalOptions="Center">
+        <Label Text="Options Menu (Placeholder)"
+               FontAttributes="Bold"
+               FontSize="20" />
+        <Button Text="Back"
+                Command="{Binding BackCommand}"
+                Margin="10" />
+    </StackLayout>
+</ContentPage>
