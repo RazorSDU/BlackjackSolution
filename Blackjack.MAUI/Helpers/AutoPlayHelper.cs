@@ -10,6 +10,9 @@ using Blackjack.MAUI.Views;
 
 namespace Blackjack.MAUI.Helpers
 {
+    /// <summary>
+    /// Provides automated gameplay for the Blackjack game, simulating player actions based on basic strategy.
+    /// </summary>
     public class AutoPlayHelper
     {
         private readonly GamePage _page;
@@ -20,12 +23,18 @@ namespace Blackjack.MAUI.Helpers
         private readonly Button _standButton;
         private readonly Button _doubleButton;
         private readonly Button _splitButton;
-        private readonly int Delay = 1;
+        private readonly int Delay = 4000;  // Delay between actions (in milliseconds)
 
         private CancellationTokenSource _cts;
 
+        /// <summary>
+        /// Gets whether auto-play is currently running.
+        /// </summary>
         public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AutoPlayHelper"/> class.
+        /// </summary>
         public AutoPlayHelper(
             GamePage page,
             GamePageViewModel viewModel,
@@ -46,6 +55,9 @@ namespace Blackjack.MAUI.Helpers
             _splitButton = splitButton;
         }
 
+        /// <summary>
+        /// Starts the automated play process.
+        /// </summary>
         public void StartAutoPlay()
         {
             if (IsRunning) return;
@@ -53,6 +65,9 @@ namespace Blackjack.MAUI.Helpers
             Task.Run(() => AutoPlayLoop(_cts.Token));
         }
 
+        /// <summary>
+        /// Stops the automated play process.
+        /// </summary>
         public void StopAutoPlay()
         {
             if (!IsRunning) return;
@@ -60,6 +75,9 @@ namespace Blackjack.MAUI.Helpers
             _cts = null;
         }
 
+        /// <summary>
+        /// Main loop that controls automatic gameplay decisions and interactions.
+        /// </summary>
         private async Task AutoPlayLoop(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
@@ -153,11 +171,17 @@ namespace Blackjack.MAUI.Helpers
             }
         }
 
+        /// <summary>
+        /// Determines if the given hand is a soft hand (contains an Ace).
+        /// </summary>
         private bool IsSoftHand(Hand hand)
         {
             return hand.Cards.Any(c => c.Rank == Rank.Ace);
         }
 
+        /// <summary>
+        /// Determines whether the player should split the current hand based on basic strategy.
+        /// </summary>
         private bool ShouldSplit(Hand hand, int dealerRank)
         {
             var card1 = hand.Cards[0];
@@ -180,6 +204,9 @@ namespace Blackjack.MAUI.Helpers
             }
         }
 
+        /// <summary>
+        /// Determines whether the player should double on a hard total based on basic strategy.
+        /// </summary>
         private bool ShouldDoubleHard(int total, int dealerRank)
         {
             return (total == 9 && dealerRank >= 3 && dealerRank <= 6) ||
@@ -187,6 +214,9 @@ namespace Blackjack.MAUI.Helpers
                    (total == 11);
         }
 
+        /// <summary>
+        /// Determines whether the player should hit on a hard total based on basic strategy.
+        /// </summary>
         private bool ShouldHitHard(int total, int dealerRank)
         {
             if (total <= 8) return true;
@@ -198,6 +228,9 @@ namespace Blackjack.MAUI.Helpers
             return false;
         }
 
+        /// <summary>
+        /// Determines whether the player should double on a soft total based on basic strategy.
+        /// </summary>
         private bool ShouldDoubleSoft(int total, int dealerRank)
         {
             if (total == 13 || total == 14) return dealerRank >= 5 && dealerRank <= 6;
@@ -206,6 +239,9 @@ namespace Blackjack.MAUI.Helpers
             return false;
         }
 
+        /// <summary>
+        /// Determines whether the player should hit on a soft total based on basic strategy.
+        /// </summary>
         private bool ShouldHitSoft(int total, int dealerRank)
         {
             if (total <= 17) return true;
