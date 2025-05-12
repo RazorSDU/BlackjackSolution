@@ -8,245 +8,182 @@ using Blackjack.Core.Models;
 using Blackjack.MAUI.ViewModels;
 using Blackjack.MAUI.Views;
 
-namespace Blackjack.MAUI.Helpers
+namespace Blackjack.MAUI.Helpers;
+
+/// <summary>
+/// Automated basic-strategy player for the MAUI blackjack UI.
+/// </summary>
+public class AutoPlayHelper
 {
-    /// <summary>
-    /// Provides automated gameplay for the Blackjack game, simulating player actions based on basic strategy.
-    /// </summary>
-    public class AutoPlayHelper
+    private readonly GamePage _page;
+    private readonly GamePageViewModel _vm;
+    private readonly Entry _betEntry;
+    private readonly Button _startRoundButton;
+    private readonly Button _hitButton;
+    private readonly Button _standButton;
+    private readonly Button _doubleButton;
+    private readonly Button _splitButton;
+
+    private const int Delay = 200;        // ms between actions
+    private CancellationTokenSource? _cts;
+
+    public bool IsRunning => _cts is { IsCancellationRequested: false };
+
+    public AutoPlayHelper(
+        GamePage page,
+        GamePageViewModel viewModel,
+        Entry betEntry,
+        Button startRoundButton,
+        Button hitButton,
+        Button standButton,
+        Button doubleButton,
+        Button splitButton)
     {
-        private readonly GamePage _page;
-        private readonly GamePageViewModel _viewModel;
-        private readonly Entry _betEntry;
-        private readonly Button _startRoundButton;
-        private readonly Button _hitButton;
-        private readonly Button _standButton;
-        private readonly Button _doubleButton;
-        private readonly Button _splitButton;
-        private readonly int Delay = 4000;  // Delay between actions (in milliseconds)
+        _page = page;
+        _vm = viewModel;
+        _betEntry = betEntry;
+        _startRoundButton = startRoundButton;
+        _hitButton = hitButton;
+        _standButton = standButton;
+        _doubleButton = doubleButton;
+        _splitButton = splitButton;
+    }
 
-        private CancellationTokenSource _cts;
+    public void StartAutoPlay()
+    {
+        if (IsRunning) return;
+        _cts = new CancellationTokenSource();
+        Task.Run(() => Loop(_cts.Token));
+    }
 
-        /// <summary>
-        /// Gets whether auto-play is currently running.
-        /// </summary>
-        public bool IsRunning => _cts != null && !_cts.IsCancellationRequested;
+    public void StopAutoPlay()
+    {
+        if (!IsRunning) return;
+        _cts!.Cancel();
+        _cts = null;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AutoPlayHelper"/> class.
-        /// </summary>
-        public AutoPlayHelper(
-            GamePage page,
-            GamePageViewModel viewModel,
-            Entry betEntry,
-            Button startRoundButton,
-            Button hitButton,
-            Button standButton,
-            Button doubleButton,
-            Button splitButton)
+    // ------------------------------------------------------------
+    // core loop
+    // ------------------------------------------------------------
+    private async Task Loop(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
         {
-            _page = page;
-            _viewModel = viewModel;
-            _betEntry = betEntry;
-            _startRoundButton = startRoundButton;
-            _hitButton = hitButton;
-            _standButton = standButton;
-            _doubleButton = doubleButton;
-            _splitButton = splitButton;
-        }
-
-        /// <summary>
-        /// Starts the automated play process.
-        /// </summary>
-        public void StartAutoPlay()
-        {
-            if (IsRunning) return;
-            _cts = new CancellationTokenSource();
-            Task.Run(() => AutoPlayLoop(_cts.Token));
-        }
-
-        /// <summary>
-        /// Stops the automated play process.
-        /// </summary>
-        public void StopAutoPlay()
-        {
-            if (!IsRunning) return;
-            _cts.Cancel();
-            _cts = null;
-        }
-
-        /// <summary>
-        /// Main loop that controls automatic gameplay decisions and interactions.
-        /// </summary>
-        private async Task AutoPlayLoop(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
+            // 1) place a bet and start the round
+            if (_vm.IsBetting)
             {
-                var vm = (GamePageViewModel)_page.BindingContext;
-                if (vm == null) break;
-
-                if (vm.IsBetting)
-                {
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                    {
-                        _betEntry.Text = "1";
-                        _startRoundButton.SendClicked();
-                        _viewModel.AutoPlayLastAction = "Auto-Play: Bet 1 and started round.";
-                    });
-                    await Task.Delay(TimeSpan.FromMilliseconds(Delay), token);
-                    continue;
-                }
-
-                var hand = vm._game.GetPlayer().Hands[0];
-                int playerTotal = hand.CalculateValue();
-                bool isSoft = IsSoftHand(hand);
-                var dealerUpCard = vm._game.GetDealer().Hands[0].Cards[0];
-                int dealerRank = (int)dealerUpCard.Rank;
-
-                if (!vm.HasSplitThisRound && vm.CanSplit && ShouldSplit(hand, dealerRank))
-                {
-                    await MainThread.InvokeOnMainThreadAsync(() =>
-                    {
-                        _splitButton.SendClicked();
-                        _viewModel.AutoPlayLastAction = "Auto-Play: Split";
-                    });
-                    await Task.Delay(TimeSpan.FromMilliseconds(Delay), token);
-                    continue;
-                }
-
-                if (isSoft)
-                {
-                    if (ShouldDoubleSoft(playerTotal, dealerRank) && vm.CanDouble)
-                    {
-                        await MainThread.InvokeOnMainThreadAsync(() =>
-                        {
-                            _doubleButton.SendClicked();
-                            _viewModel.AutoPlayLastAction = "Auto-Play: Double (Soft)";
-                        });
-                        await Task.Delay(TimeSpan.FromMilliseconds(Delay), token);
-                        continue;
-                    }
-                    if (ShouldHitSoft(playerTotal, dealerRank) && vm.CanHit)
-                    {
-                        await MainThread.InvokeOnMainThreadAsync(() =>
-                        {
-                            _hitButton.SendClicked();
-                            _viewModel.AutoPlayLastAction = "Auto-Play: Hit (Soft)";
-                        });
-                        await Task.Delay(TimeSpan.FromMilliseconds(Delay), token);
-                        continue;
-                    }
-                }
-                else
-                {
-                    if (ShouldDoubleHard(playerTotal, dealerRank) && vm.CanDouble)
-                    {
-                        await MainThread.InvokeOnMainThreadAsync(() =>
-                        {
-                            _doubleButton.SendClicked();
-                            _viewModel.AutoPlayLastAction = "Auto-Play: Double (Hard)";
-                        });
-                        await Task.Delay(TimeSpan.FromMilliseconds(Delay), token);
-                        continue;
-                    }
-                    if (ShouldHitHard(playerTotal, dealerRank) && vm.CanHit)
-                    {
-                        await MainThread.InvokeOnMainThreadAsync(() =>
-                        {
-                            _hitButton.SendClicked();
-                            _viewModel.AutoPlayLastAction = "Auto-Play: Hit (Hard)";
-                        });
-                        await Task.Delay(TimeSpan.FromMilliseconds(Delay), token);
-                        continue;
-                    }
-                }
-
                 await MainThread.InvokeOnMainThreadAsync(() =>
                 {
-                    _standButton.SendClicked();
-                    _viewModel.AutoPlayLastAction = "Auto-Play: Stand";
+                    _betEntry.Text = "1";
+                    _vm.CurrentHandIndex = 0;          // <-- important reset
+                    _startRoundButton.SendClicked();
+                    _vm.AutoPlayLastAction = "Auto-Play: bet 1, new round";
                 });
-
-                await Task.Delay(TimeSpan.FromMilliseconds(Delay), token);
+                await Task.Delay(Delay, token);
+                continue;
             }
-        }
 
-        /// <summary>
-        /// Determines if the given hand is a soft hand (contains an Ace).
-        /// </summary>
-        private bool IsSoftHand(Hand hand)
-        {
-            return hand.Cards.Any(c => c.Rank == Rank.Ace);
-        }
+            // 2) look at the *current* hand (0 or 1)
+            int handIdx = _vm.CurrentHandIndex;
+            var hand = _vm._game.GetPlayer().Hands[handIdx];
+            int playerTotal = hand.CalculateValue();
+            bool isSoft = hand.Cards.Any(c => c.Rank == Rank.Ace);
 
-        /// <summary>
-        /// Determines whether the player should split the current hand based on basic strategy.
-        /// </summary>
-        private bool ShouldSplit(Hand hand, int dealerRank)
-        {
-            var card1 = hand.Cards[0];
-            var card2 = hand.Cards[1];
-            if (card1.Rank != card2.Rank) return false;
+            var dealerUp = _vm._game.GetDealer().Hands[0].Cards[0];
+            int dealerValue = DealerUpValue(dealerUp);
 
-            switch (card1.Rank)
+            // 3) split?
+            if (!_vm.HasSplitThisRound && _vm.CanSplit && handIdx == 0 &&
+                ShouldSplit(hand, dealerValue))
             {
-                case Rank.Ace: return true;
-                case Rank.Ten: return false;
-                case Rank.Nine: return dealerRank != 7 && dealerRank < 10;
-                case Rank.Eight: return true;
-                case Rank.Seven: return dealerRank <= 7;
-                case Rank.Six: return dealerRank <= 6;
-                case Rank.Five: return false;
-                case Rank.Four: return dealerRank == 5 || dealerRank == 6;
-                case Rank.Three:
-                case Rank.Two: return dealerRank <= 7;
-                default: return false;
+                await ClickAsync(_splitButton, "Split");
+                continue;
             }
-        }
 
-        /// <summary>
-        /// Determines whether the player should double on a hard total based on basic strategy.
-        /// </summary>
-        private bool ShouldDoubleHard(int total, int dealerRank)
-        {
-            return (total == 9 && dealerRank >= 3 && dealerRank <= 6) ||
-                   (total == 10 && dealerRank <= 9) ||
-                   (total == 11);
-        }
+            // 4) double?
+            if (_vm.CanDouble &&
+                ((isSoft && ShouldDoubleSoft(playerTotal, dealerValue)) ||
+                 (!isSoft && ShouldDoubleHard(playerTotal, dealerValue))))
+            {
+                await ClickAsync(_doubleButton, isSoft ? "Double (soft)" : "Double (hard)");
+                continue;
+            }
 
-        /// <summary>
-        /// Determines whether the player should hit on a hard total based on basic strategy.
-        /// </summary>
-        private bool ShouldHitHard(int total, int dealerRank)
-        {
-            if (total <= 8) return true;
-            if (total == 9 && !(dealerRank >= 3 && dealerRank <= 6)) return true;
-            if (total == 10 && dealerRank >= 10) return true;
-            if (total == 11 && dealerRank == 11) return true;
-            if (total == 12) return dealerRank < 4 || dealerRank > 6;
-            if (total >= 13 && total <= 16) return dealerRank >= 7;
-            return false;
-        }
+            // 5) hit?
+            if (_vm.CanHit &&
+                ((isSoft && ShouldHitSoft(playerTotal, dealerValue)) ||
+                 (!isSoft && ShouldHitHard(playerTotal, dealerValue))))
+            {
+                await ClickAsync(_hitButton, isSoft ? "Hit (soft)" : "Hit (hard)");
+                continue;
+            }
 
-        /// <summary>
-        /// Determines whether the player should double on a soft total based on basic strategy.
-        /// </summary>
-        private bool ShouldDoubleSoft(int total, int dealerRank)
-        {
-            if (total == 13 || total == 14) return dealerRank >= 5 && dealerRank <= 6;
-            if (total == 15 || total == 16) return dealerRank >= 4 && dealerRank <= 6;
-            if (total == 17) return dealerRank >= 3 && dealerRank <= 6;
-            return false;
-        }
-
-        /// <summary>
-        /// Determines whether the player should hit on a soft total based on basic strategy.
-        /// </summary>
-        private bool ShouldHitSoft(int total, int dealerRank)
-        {
-            if (total <= 17) return true;
-            if (total == 18 && (dealerRank == 9 || dealerRank == 10 || dealerRank == 11)) return true;
-            return false;
+            // 6) otherwise stand
+            await ClickAsync(_standButton, "Stand");
         }
     }
+
+    // ------------------------------------------------------------
+    // helpers
+    // ------------------------------------------------------------
+    private async Task ClickAsync(Button btn, string action)
+    {
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            btn.SendClicked();
+            _vm.AutoPlayLastAction = $"Auto-Play: {action}";
+        });
+        await Task.Delay(Delay);
+    }
+
+    private static int DealerUpValue(Card c) =>
+        c.Rank switch
+        {
+            Rank.Ace => 11,
+            Rank.King or Rank.Queen
+                or Rank.Jack or Rank.Ten => 10,
+            _ => (int)c.Rank
+        };
+
+    private static bool ShouldSplit(Hand h, int dealer)
+    {
+        var r = h.Cards[0].Rank;   // both cards same rank by definition
+        return r switch
+        {
+            Rank.Ace => true,
+            Rank.Eight => true,
+            Rank.Nine => dealer is < 10 and not 7,
+            Rank.Seven => dealer <= 7,
+            Rank.Six => dealer <= 6,
+            Rank.Four => dealer is 5 or 6,
+            Rank.Two or Rank.Three => dealer <= 7,
+            _ => false
+        };
+    }
+
+    private static bool ShouldDoubleHard(int total, int dealer) =>
+        (total == 9 && dealer is >= 3 and <= 6) ||
+        (total == 10 && dealer <= 9) ||
+        (total == 11);
+
+    private static bool ShouldHitHard(int total, int dealer)
+    {
+        if (total <= 8) return true;
+        if (total == 9 && dealer is < 3 or > 6) return true;
+        if (total == 10 && dealer >= 10) return true;
+        if (total == 11 && dealer == 11) return true;
+        if (total == 12 && (dealer < 4 || dealer > 6)) return true;
+        if (total is >= 13 and <= 16 && dealer >= 7) return true;
+        return false;
+    }
+
+    private static bool ShouldDoubleSoft(int total, int dealer) =>
+        (total is 13 or 14) && dealer is 5 or 6 ||
+        (total is 15 or 16) && dealer is 4 or 5 or 6 ||
+        (total == 17) && dealer is >= 3 and <= 6;
+
+    private static bool ShouldHitSoft(int total, int dealer) =>
+        total <= 17 ||
+        (total == 18 && dealer is 9 or 10 or 11);
 }

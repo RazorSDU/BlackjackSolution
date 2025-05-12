@@ -258,6 +258,7 @@
                                local:GridPosition.VerticalAlignment="Bottom"
                                Spacing="-60"
                                IsVisible="{Binding IsSplitHand1Active}"
+                               Opacity="{Binding Hand1Opacity}"
                                BindableLayout.ItemsSource="{Binding SplitHand1Images}">
             <BindableLayout.ItemTemplate>
                 <DataTemplate>
@@ -274,6 +275,7 @@
                                local:GridPosition.VerticalAlignment="Bottom"
                                Spacing="-60"
                                IsVisible="{Binding IsSplitHand2Active}"
+                               Opacity="{Binding Hand2Opacity}"
                                BindableLayout.ItemsSource="{Binding SplitHand2Images}">
             <BindableLayout.ItemTemplate>
                 <DataTemplate>

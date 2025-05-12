@@ -108,7 +108,7 @@ namespace Blackjack.Core.Models
             var c2 = _hands[handIndex].Cards[1];
 
             // Instead of checking 'exact same rank', check if both are 10-valued
-            if (!AreBothTenValued(c1, c2))
+            if (!HaveSameRank(c1, c2))
                 return false;
 
             // Need enough money to match the bet
@@ -119,21 +119,7 @@ namespace Blackjack.Core.Models
             return true;
         }
 
-        private bool AreBothTenValued(Card c1, Card c2)
-        {
-            // Example logic: 
-            // T, J, Q, K are each worth 10. 
-            // If your `Card` class has a `Value` property that returns 10 for T/J/Q/K, 
-            // you could do (c1.Value == 10 && c2.Value == 10).
-            // Otherwise, just check ranks:
-            bool isTenValued(Card c) =>
-                c.Rank == Rank.Ten ||
-                c.Rank == Rank.Jack ||
-                c.Rank == Rank.Queen ||
-                c.Rank == Rank.King;
-
-            return isTenValued(c1) && isTenValued(c2);
-        }
+        private bool HaveSameRank(Card c1, Card c2) => c1.Rank == c2.Rank;
 
 
         /// <summary>

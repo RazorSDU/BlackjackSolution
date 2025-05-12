@@ -51,6 +51,38 @@ namespace Blackjack.MAUI.ViewModels
             set => SetProperty(ref _autoPlayLastAction, value);
         }
 
+        private int _currentHandIndex = 0;
+        public int CurrentHandIndex
+        {
+            get => _currentHandIndex;
+            set
+            {
+                if (SetProperty(ref _currentHandIndex, value))
+                    UpdateHandHighlights();
+            }
+        }
+
+        private void UpdateHandHighlights()
+        {
+            Hand1Opacity = CurrentHandIndex == 0 ? 1.0 : 0.4;
+            Hand2Opacity = CurrentHandIndex == 1 ? 1.0 : 0.4;
+        }
+
+        private double _hand1Opacity = 1.0;
+        private double _hand2Opacity = 0.4;
+
+        public double Hand1Opacity
+        {
+            get => _hand1Opacity;
+            set => SetProperty(ref _hand1Opacity, value);
+        }
+
+        public double Hand2Opacity
+        {
+            get => _hand2Opacity;
+            set => SetProperty(ref _hand2Opacity, value);
+        }
+
 
         // Commands
         public ICommand StartRoundCommand { get; }
@@ -329,18 +361,23 @@ namespace Blackjack.MAUI.ViewModels
 
         private void OnHit()
         {
-            _game.PlayerHit(0);
+            _game.PlayerHit(CurrentHandIndex);
 
             // We need to add a card image to PlayerCardImages as well
-            var playerHand = _game.GetPlayer().Hands[0];
+            var playerHand = _game.GetPlayer().Hands[CurrentHandIndex];
             var newCard = playerHand.Cards[^1]; // last card
-            PlayerCardImages.Add(GetCardImagePath(newCard));
+            if (!HasSplitThisRound)
+                PlayerCardImages.Add(GetCardImagePath(newCard));
+            else if (CurrentHandIndex == 0)
+                SplitHand1Images.Add(GetCardImagePath(newCard));
+            else
+                SplitHand2Images.Add(GetCardImagePath(newCard));
 
             // Refresh UI
-            PlayerHandDisplay = _game.DescribePlayerHand(0);
+            PlayerHandDisplay = _game.DescribePlayerHand(CurrentHandIndex);
             PlayerMoney = _game.PlayerMoney;
 
-            if (_game.IsPlayerBust(0))
+            if (_game.IsPlayerBust(CurrentHandIndex))
             {
                 UpdateUIState("You busted!");
                 RevealDealerHandAndFinish();
@@ -353,9 +390,25 @@ namespace Blackjack.MAUI.ViewModels
 
         private void OnStand()
         {
-            // Player stands => dealer's turn
-            _game.DealerTurn();
-            RevealDealerHandAndFinish();
+            if (HasSplitThisRound && CurrentHandIndex == 0)
+            {
+                // move to second hand
+                CurrentHandIndex = 1;
+                CurrentHandLabel = "Playing Hand #2";
+
+                CanHit = true;
+                CanStand = true;
+                CanDouble = true;
+                CanSplit = false;     // no re-split in this simple version
+
+                UpdateUIState("Hand #2: Hit, Stand or Double.");
+            }
+            else
+            {
+                // either single hand, or just finished hand #2
+                _game.DealerTurn();
+                RevealDealerHandAndFinish();
+            }
         }
 
         private void OnDouble()
@@ -391,57 +444,41 @@ namespace Blackjack.MAUI.ViewModels
         {
             if (_hasSplitThisRound)
             {
-                // Already split => do nothing or show message
                 UpdateUIState("You already split once this round.");
                 return;
             }
 
-            if (_game.CanSplit(0))
-            {
-                _game.SplitHand(0);
-                HasSplitThisRound = true;  // Mark that we've split once
-
-                // The game now has 2 separate hands: index 0 and index 1
-
-                // Clear old images in main PlayerCardImages if you want
-                // or keep them for some reason. Typically, you'd shift them 
-                // into the split-hand images:
-                PlayerCardImages.Clear();
-
-                // Fill up the new hand #0 => SplitHand1Images
-                SplitHand1Images.Clear();
-                var hand0 = _game.GetPlayer().Hands[0];
-                foreach (var card in hand0.Cards)
-                {
-                    SplitHand1Images.Add(GetCardImagePath(card));
-                }
-
-                // Fill up the new hand #1 => SplitHand2Images
-                SplitHand2Images.Clear();
-                var hand1 = _game.GetPlayer().Hands[1];
-                foreach (var card in hand1.Cards)
-                {
-                    SplitHand2Images.Add(GetCardImagePath(card));
-                }
-
-                // Show them in UI
-                IsSplitHand1Active = true;
-                IsSplitHand2Active = true;
-
-                // Update the textual display
-                PlayerMoney = _game.PlayerMoney;
-                PlayerHandDisplay = _game.DescribePlayerHand(0)
-                                  + " | " + _game.DescribePlayerHand(1);
-
-                // Also update the new label
-                CurrentHandLabel = "You now have Hand #1 and Hand #2!";
-
-                UpdateUIState("You split your hand. Now you can Hit/Stand/Double each hand in turn.");
-            }
-            else
+            if (!_game.CanSplit(0))
             {
                 UpdateUIState("Cannot split right now.");
+                return;
             }
+
+            _game.SplitHand(0);
+            HasSplitThisRound = true;
+            CurrentHandIndex = 0;          // start on first split hand
+            UpdateHandHighlights();
+
+            PlayerCardImages.Clear();
+            SplitHand1Images.Clear();
+            SplitHand2Images.Clear();
+
+            foreach (var card in _game.GetPlayer().Hands[0].Cards)
+                SplitHand1Images.Add(GetCardImagePath(card));
+
+            foreach (var card in _game.GetPlayer().Hands[1].Cards)
+                SplitHand2Images.Add(GetCardImagePath(card));
+
+            IsSplitHand1Active = true;
+            IsSplitHand2Active = true;
+
+            PlayerMoney = _game.PlayerMoney;
+            PlayerHandDisplay = _game.DescribePlayerHand(0) + " | " +
+                                 _game.DescribePlayerHand(1);
+
+            CurrentHandLabel = "Playing Hand #1";
+            CanSplit = false;     // prevent second split
+            UpdateUIState("You split your hand. Now play Hand #1.");
         }
 
 
