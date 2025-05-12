@@ -40,7 +40,7 @@
 
 ## 🚀 Running the App Locally
 ```bash
-git clone https://github.com/<your-handle>/Blackjack.MAUI.git
+git clone https://github.com/RazorSDU/BlackjackSolution.git
 cd Blackjack.MAUI
 
 # Run on Windows desktop
